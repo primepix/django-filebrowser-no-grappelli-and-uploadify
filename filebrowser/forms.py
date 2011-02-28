@@ -115,4 +115,4 @@ class UploadForm(forms.Form):
         return self.cleaned_data['file']
 
 class EditForm(forms.Form):
-    content = forms.CharField(widget=forms.Textarea(), required=False)
+    content = forms.CharField(label=_('content'),widget=forms.Textarea(), required=False)
