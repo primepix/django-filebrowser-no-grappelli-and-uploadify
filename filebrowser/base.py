@@ -29,8 +29,9 @@ class FileObject(object):
     PATH has to be relative to MEDIA_ROOT.
     """
     
-    def __init__(self, path):
+    def __init__(self, path, root_directory):
         self.path = force_unicode(path)
+        self.root_directory = root_directory
         self.url_rel = path.replace("\\","/")
         self.head = os.path.split(path)[0]
         self.filename = os.path.split(path)[1]
@@ -93,7 +94,7 @@ class FileObject(object):
         """
         Path relative to initial directory.
         """
-        directory_re = re.compile(r'^(%s)' % (DIRECTORY))
+        directory_re = re.compile(r'^(%s)' % (self.root_directory))
         value = directory_re.sub('', self.path)
         return u"%s" % value
     path_relative_directory = property(_path_relative_directory)
@@ -131,7 +132,7 @@ class FileObject(object):
     
     def url_admin(self):
         if self.filetype_checked == "Folder":
-            directory_re = re.compile(r'^(%s)' % (DIRECTORY))
+            directory_re = re.compile(r'^(%s)' % (self.root_directory))
             value = directory_re.sub('', self.path)
             return u"%s" % value
         else:

@@ -43,15 +43,15 @@ for k, v in VERSIONS.iteritems():
     filter_re.append(re.compile(exp))
 
 
-def browse(request):
+def browse(request, root_directory=DIRECTORY):
     """
     Browse Files/Directories.
     """
 
     # QUERY / PATH CHECK
     query = request.GET.copy()
-    path = get_path(query.get('dir', ''))
-    directory = get_path('')
+    path = get_path(query.get('dir', ''), root_directory)
+    directory = get_path('', root_directory)
 
     if path is None:
         msg = _('The requested Folder does not exist.')
@@ -61,7 +61,7 @@ def browse(request):
             raise ImproperlyConfigured, _("Error finding Upload-Folder. Maybe it does not exist?")
         redirect_url = reverse("fb_browse") + query_helper(query, "", "dir")
         return HttpResponseRedirect(redirect_url)
-    abs_path = os.path.join(MEDIA_ROOT, DIRECTORY, path)
+    abs_path = os.path.join(MEDIA_ROOT, root_directory, path)
 
     # INITIAL VARIABLES
     results_var = {'results_total': 0, 'results_current': 0, 'delete_total': 0, 'images_total': 0, 'select_total': 0 }
@@ -83,7 +83,7 @@ def browse(request):
         results_var['results_total'] += 1
 
         # CREATE FILEOBJECT
-        fileobject = FileObject(os.path.join(DIRECTORY, path, file))
+        fileobject = FileObject(os.path.join(root_directory, path, file), root_directory)
 
         # FILTER / SEARCH
         append = False
@@ -153,7 +153,7 @@ browse = staff_member_required(never_cache(browse))
 filebrowser_pre_createdir = Signal(providing_args=["path", "dirname"])
 filebrowser_post_createdir = Signal(providing_args=["path", "dirname"])
 
-def mkdir(request):
+def mkdir(request, root_directory=DIRECTORY):
     """
     Make Directory.
     """
@@ -162,12 +162,12 @@ def mkdir(request):
 
     # QUERY / PATH CHECK
     query = request.GET
-    path = get_path(query.get('dir', ''))
+    path = get_path(query.get('dir', ''), root_directory)
     if path is None:
         msg = _('The requested Folder does not exist.')
         request.user.message_set.create(message=msg)
         return HttpResponseRedirect(reverse("fb_browse"))
-    abs_path = os.path.join(MEDIA_ROOT, DIRECTORY, path)
+    abs_path = os.path.join(MEDIA_ROOT, root_directory, path)
 
     if request.method == 'POST':
         form = MakeDirForm(abs_path, request.POST)
@@ -212,7 +212,7 @@ mkdir = staff_member_required(never_cache(mkdir))
 filebrowser_pre_upload = Signal(providing_args=["path", "file"])
 filebrowser_post_upload = Signal(providing_args=["path", "file"])
 
-def upload(request):
+def upload(request, root_directory=DIRECTORY):
     """
     Multiple File Upload.
     """
@@ -221,12 +221,12 @@ def upload(request):
     
     # QUERY / PATH CHECK
     query = request.GET
-    path = get_path(query.get('dir', ''))
+    path = get_path(query.get('dir', ''), root_directory)
     if path is None:
         msg = _('The requested Folder does not exist.')
         request.user.message_set.create(message=msg)
         return HttpResponseRedirect(reverse("fb_browse"))
-    abs_path = os.path.join(MEDIA_ROOT, DIRECTORY, path)
+    abs_path = os.path.join(MEDIA_ROOT, root_directory, path)
 
     if STRICT_PIL:
         from PIL import ImageFile
@@ -279,7 +279,7 @@ upload = staff_member_required(never_cache(upload))
 filebrowser_pre_delete = Signal(providing_args=["path", "filename"])
 filebrowser_post_delete = Signal(providing_args=["path", "filename"])
 
-def delete(request):
+def delete(request, root_directory):
     """
     Delete existing File/Directory.
     
@@ -288,7 +288,7 @@ def delete(request):
 
     # QUERY / PATH CHECK
     query = request.GET
-    path = get_path(query.get('dir', ''))
+    path = get_path(query.get('dir', ''), root_directory)
     filename = get_file(query.get('dir', ''), query.get('filename', ''))
     if path is None or filename is None:
         if path is None:
@@ -297,12 +297,12 @@ def delete(request):
             msg = _('The requested File does not exist.')
         request.user.message_set.create(message=msg)
         return HttpResponseRedirect(reverse("fb_browse"))
-    abs_path = os.path.join(MEDIA_ROOT, DIRECTORY, path)
+    abs_path = os.path.join(MEDIA_ROOT, root_directory, path)
 
     msg = ""
     if request.GET:
         if request.GET.get('filetype') != "Folder":
-            relative_server_path = os.path.join(DIRECTORY, path, filename)
+            relative_server_path = os.path.join(root_directory, path, filename)
             try:
                 # PRE DELETE SIGNAL
                 filebrowser_pre_delete.send(sender=request, path=path, filename=filename)
@@ -359,7 +359,7 @@ delete = staff_member_required(never_cache(delete))
 filebrowser_pre_rename = Signal(providing_args=["path", "filename", "new_filename"])
 filebrowser_post_rename = Signal(providing_args=["path", "filename", "new_filename"])
 
-def rename(request):
+def rename(request, root_directory=DIRECTORY):
     """
     Rename existing File/Directory.
     
@@ -370,7 +370,7 @@ def rename(request):
 
     # QUERY / PATH CHECK
     query = request.GET
-    path = get_path(query.get('dir', ''))
+    path = get_path(query.get('dir', ''), root_directory)
     filename = get_file(query.get('dir', ''), query.get('filename', ''))
     if path is None or filename is None:
         if path is None:
@@ -379,15 +379,15 @@ def rename(request):
             msg = _('The requested File does not exist.')
         request.user.message_set.create(message=msg)
         return HttpResponseRedirect(reverse("fb_browse"))
-    abs_path = os.path.join(MEDIA_ROOT, DIRECTORY, path)
+    abs_path = os.path.join(MEDIA_ROOT, root_directory, path)
     file_extension = os.path.splitext(filename)[1].lower()
 
     if request.method == 'POST':
         form = RenameForm(abs_path, file_extension, request.POST)
         if form.is_valid():
-            relative_server_path = os.path.join(DIRECTORY, path, filename)
+            relative_server_path = os.path.join(root_directory, path, filename)
             new_filename = form.cleaned_data['name'] + file_extension
-            new_relative_server_path = os.path.join(DIRECTORY, path, new_filename)
+            new_relative_server_path = os.path.join(root_directory, path, new_filename)
             try:
                 # PRE RENAME SIGNAL
                 filebrowser_pre_rename.send(sender=request, path=path, filename=filename, new_filename=new_filename)
@@ -424,10 +424,10 @@ def rename(request):
 rename = staff_member_required(never_cache(rename))
 
 
-def _get_path_and_filename(request):
+def _get_path_and_filename(request, root_directory):
     query = request.GET
-    path = get_path(query.get('dir', ''))
-    filename = get_file(query.get('dir', ''), query.get('filename', ''))
+    path = get_path(query.get('dir', ''), root_directory)
+    filename = get_file(query.get('dir', ''), query.get('filename', ''), root_directory)
     if path is None or filename is None:
         if path is None:
             msg = _('The requested Folder does not exist.')
@@ -435,11 +435,11 @@ def _get_path_and_filename(request):
             msg = _('The requested File does not exist.')
         request.user.message_set.create(message=msg)
         return HttpResponseRedirect(reverse("fb_browse"))
-    abs_path = os.path.join(MEDIA_ROOT, DIRECTORY, path)
+    abs_path = os.path.join(MEDIA_ROOT, root_directory, path)
 
     return path, filename, abs_path
 
-def edit(request):
+def edit(request, root_directory=DIRECTORY):
     """
     simple edit a file content.
     TODO:
@@ -448,13 +448,13 @@ def edit(request):
         - merge coded parts and template parts
     """
     # QUERY / PATH CHECK
-    result = _get_path_and_filename(request)
+    result = _get_path_and_filename(request, root_directory)
     if isinstance(result, HttpResponse):
         # path or filename doesn't exist
         return result
     path, filename, abs_path = result
 
-    relative_server_path = os.path.join(DIRECTORY, path, filename)
+    relative_server_path = os.path.join(root_directory, path, filename)
     abs_filepath = os.path.join(MEDIA_ROOT, relative_server_path)
 
     if request.method == 'POST':
@@ -486,14 +486,14 @@ def edit(request):
 edit = staff_member_required(never_cache(edit))
 
 
-def versions(request):
+def versions(request, root_directory):
     """
     Show all Versions for an Image according to ADMIN_VERSIONS.
     """
 
     # QUERY / PATH CHECK
     query = request.GET
-    path = get_path(query.get('dir', ''))
+    path = get_path(query.get('dir', ''), root_directory)
     filename = get_file(query.get('dir', ''), query.get('filename', ''))
     if path is None or filename is None:
         if path is None:
@@ -502,10 +502,10 @@ def versions(request):
             msg = _('The requested File does not exist.')
         request.user.message_set.create(message=msg)
         return HttpResponseRedirect(reverse("fb_browse"))
-    abs_path = os.path.join(MEDIA_ROOT, DIRECTORY, path)
+    abs_path = os.path.join(MEDIA_ROOT, root_directory, path)
 
     return render_to_response('filebrowser/versions.html', {
-        'original': path_to_url(os.path.join(DIRECTORY, path, filename)),
+        'original': path_to_url(os.path.join(root_directory, path, filename)),
         'query': query,
         'title': _(u'Versions for "%s"') % filename,
         'settings_var': get_settings_var(),

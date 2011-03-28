@@ -57,7 +57,7 @@ def dir_from_url(value):
     URL has to be an absolute URL including MEDIA_URL or
     an URL relative to MEDIA_URL.
     """
-    
+    print "get-----------------file"    
     mediaurl_re = re.compile(r'^(%s)' % (MEDIA_URL))
     value = mediaurl_re.sub('', value)
     directory_re = re.compile(r'^(%s)' % (DIRECTORY))
@@ -145,22 +145,22 @@ def url_join(*args):
     return url
 
 
-def get_path(path):
+def get_path(path, root_directory):
     """
     Get Path.
     """
     
-    if path.startswith('.') or os.path.isabs(path) or not os.path.isdir(os.path.join(MEDIA_ROOT, DIRECTORY, path)):
+    if path.startswith('.') or os.path.isabs(path) or not os.path.isdir(os.path.join(MEDIA_ROOT, root_directory, path)):
         return None
     return path
 
 
-def get_file(path, filename):
+def get_file(path, filename, root_directory):
     """
     Get File.
     """
-    
-    converted_path = smart_str(os.path.join(MEDIA_ROOT, DIRECTORY, path, filename))
+
+    converted_path = smart_str(os.path.join(MEDIA_ROOT, root_directory, path, filename))
     
     if not os.path.isfile(converted_path) and not os.path.isdir(converted_path):
         return None
