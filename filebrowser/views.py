@@ -1,7 +1,7 @@
 # coding: utf-8
 
 # general imports
-import os, re
+import os, re, codecs
 from time import gmtime, strftime
 
 # django imports
@@ -289,7 +289,8 @@ def delete(request, root_directory):
     # QUERY / PATH CHECK
     query = request.GET
     path = get_path(query.get('dir', ''), root_directory)
-    filename = get_file(query.get('dir', ''), query.get('filename', ''))
+    filename = get_file(query.get('dir', ''), query.get('filename', ''),
+                        root_directory)
     if path is None or filename is None:
         if path is None:
             msg = _('The requested Folder does not exist.')
@@ -371,7 +372,8 @@ def rename(request, root_directory=DIRECTORY):
     # QUERY / PATH CHECK
     query = request.GET
     path = get_path(query.get('dir', ''), root_directory)
-    filename = get_file(query.get('dir', ''), query.get('filename', ''))
+    filename = get_file(query.get('dir', ''), query.get('filename', ''),
+                        root_directory)
     if path is None or filename is None:
         if path is None:
             msg = _('The requested Folder does not exist.')
@@ -461,7 +463,7 @@ def edit(request, root_directory=DIRECTORY):
         form = EditForm(request.POST)
         if form.is_valid():
             new_content = form.cleaned_data["content"]
-            f = file(abs_filepath, "w")
+            f = codecs.open(abs_filepath, "w", encoding="UTF-8")
             f.write(new_content)
             f.close()
             msg = _('Editing was successful.')
