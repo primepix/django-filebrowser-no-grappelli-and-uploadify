@@ -72,7 +72,7 @@
             </thead>
             <tbody>
             {% for version in settings_var.ADMIN_VERSIONS %}
-                {% version_object original version as image_version %}
+                {% version_object original root_directory version as image_version %}
                 <tr class="{% cycle 'row1' 'row2' %}">
                 
                 <!-- Fileselect for FileBrowseField -->

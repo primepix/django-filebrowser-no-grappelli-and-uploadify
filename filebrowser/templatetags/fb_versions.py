@@ -73,9 +73,10 @@ def version(parser, token):
 
 
 class VersionObjectNode(Node):
-    def __init__(self, src, version_prefix, var_name):
+    def __init__(self, src, root_directory, version_prefix, var_name):
         self.var_name = var_name
         self.src = Variable(src)
+        self.root_directory = Variable(root_directory)
         if (version_prefix[0] == version_prefix[-1] and version_prefix[0] in ('"', "'")):
             self.version_prefix = version_prefix[1:-1]
         else:
@@ -87,6 +88,7 @@ class VersionObjectNode(Node):
             source = self.src.resolve(context)
         except VariableDoesNotExist:
             return None
+        root_directory = self.root_directory.resolve(context)
         if self.version_prefix:
             version_prefix = self.version_prefix
         else:
@@ -103,7 +105,7 @@ class VersionObjectNode(Node):
             elif os.path.getmtime(smart_str(os.path.join(MEDIA_ROOT, url_to_path(source)))) > os.path.getmtime(smart_str(os.path.join(MEDIA_ROOT, version_path))):
                 # recreate version if original image was updated
                 version_path = version_generator(url_to_path(source), version_prefix, force=True)
-            context[self.var_name] = FileObject(version_path)
+            context[self.var_name] = FileObject(version_path, root_directory)
         except:
             context[self.var_name] = ""
         return ''
@@ -127,13 +129,13 @@ def version_object(parser, token):
         tag, arg = token.contents.split(None, 1)
     except:
         raise TemplateSyntaxError, "%s tag requires arguments" % token.contents.split()[0]
-    m = re.search(r'(.*?) (.*?) as (\w+)', arg)
+    m = re.search(r'(.*?) (.*?) (.*?) as (\w+)', arg)
     if not m:
         raise TemplateSyntaxError, "%r tag had invalid arguments" % tag
-    src, version_prefix, var_name = m.groups()
+    src, root_directory, version_prefix, var_name = m.groups()
     if (version_prefix[0] == version_prefix[-1] and version_prefix[0] in ('"', "'")) and version_prefix.lower()[1:-1] not in VERSIONS:
         raise TemplateSyntaxError, "%s tag received bad version_prefix %s" % (tag, version_prefix)
-    return VersionObjectNode(src, version_prefix, var_name)
+    return VersionObjectNode(src, root_directory, version_prefix, var_name)
 
 
 class VersionSettingNode(Node):

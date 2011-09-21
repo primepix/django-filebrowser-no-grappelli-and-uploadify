@@ -279,7 +279,7 @@ upload = staff_member_required(never_cache(upload))
 filebrowser_pre_delete = Signal(providing_args=["path", "filename"])
 filebrowser_post_delete = Signal(providing_args=["path", "filename"])
 
-def delete(request, root_directory):
+def delete(request, root_directory=DIRECTORY):
     """
     Delete existing File/Directory.
     
@@ -488,7 +488,7 @@ def edit(request, root_directory=DIRECTORY):
 edit = staff_member_required(never_cache(edit))
 
 
-def versions(request, root_directory):
+def versions(request, root_directory=DIRECTORY):
     """
     Show all Versions for an Image according to ADMIN_VERSIONS.
     """
@@ -496,7 +496,8 @@ def versions(request, root_directory):
     # QUERY / PATH CHECK
     query = request.GET
     path = get_path(query.get('dir', ''), root_directory)
-    filename = get_file(query.get('dir', ''), query.get('filename', ''))
+    filename = get_file(query.get('dir', ''), query.get('filename', ''),
+                        root_directory)
     if path is None or filename is None:
         if path is None:
             msg = _('The requested Folder does not exist.')
@@ -507,7 +508,9 @@ def versions(request, root_directory):
     abs_path = os.path.join(MEDIA_ROOT, root_directory, path)
 
     return render_to_response('filebrowser/versions.html', {
-        'original': path_to_url(os.path.join(root_directory, path, filename)),
+        'original': path_to_url(os.path.join(MEDIA_ROOT, root_directory,
+                                             path, filename)),
+        'root_directory': root_directory,
         'query': query,
         'title': _(u'Versions for "%s"') % filename,
         'settings_var': get_settings_var(),
