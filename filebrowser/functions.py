@@ -287,6 +287,9 @@ def version_generator(value, version_prefix, force=None):
     ImageFile.MAXBLOCK = IMAGE_MAXBLOCK # default is 64k
     
     try:
+        file_size = os.stat(smart_str(os.path.join(MEDIA_ROOT, value))).st_size
+        if file_size > 1024*1024*3:
+            value = 'filebrowser/img/icon-image.png'
         im = Image.open(smart_str(os.path.join(MEDIA_ROOT, value)))
         version_path = get_version_path(value, version_prefix)
         absolute_version_path = smart_str(os.path.join(MEDIA_ROOT, version_path))
