@@ -291,7 +291,6 @@ def version_generator(value, version_prefix, force=None):
         im = Image.open(smart_str(os.path.join(MEDIA_ROOT, value)))
         if file_size > 1024**2 or im.size[0] > 1024 or im.size[1] > 1024:
             im = Image.open(smart_str(os.path.join(MEDIA_ROOT, 'filebrowser/img/icon-image.png')))
-            print 'lol'
         version_path = get_version_path(value, version_prefix)
         absolute_version_path = smart_str(os.path.join(MEDIA_ROOT, version_path))
         version_dir = os.path.split(absolute_version_path)[0]
