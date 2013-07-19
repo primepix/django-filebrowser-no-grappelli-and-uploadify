@@ -1,9 +1,10 @@
-{% load i18n adminmedia fb_tags %}
+{% load i18n static fb_tags %}
+{% get_static_prefix as STATIC_PREFIX %}
 
 <div id="toolbar">
   <form id="changelist-search" action="." method="get">
     <div><!-- DIV needed for valid HTML -->
-      <label for="searchbar"><img alt="Search" src="{% admin_media_prefix %}img/admin/icon_searchbox.png"></label>
+      <label for="searchbar"><img alt="Search" src="{{ STATIC_PREFIX }}admin/img/admin/icon_searchbox.png"></label>
       <input type="text" name="q" value="{{ query.q }}" id="searchbar" />
       {% if query.filter_type %}<input type="hidden" name="filter_type" value="{{ query.filter_type }}" />{% endif %}
       {% if query.filter_date %}<input type="hidden" name="filter_date" value="{{ query.filter_date }}" />{% endif %}
